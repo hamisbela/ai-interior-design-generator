@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 20px;
+            cursor: pointer;
+        }
+        #image {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        .loading {
+            display: none;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Image Generator</h1>
+    <button onclick="generateImage()">Generate Image</button>
+    <div class="loading" id="loading">Generating image...</div>
+    <img id="image" />
+
+    <script>
+        async function generateImage() {
+            const button = document.querySelector('button');
+            const loading = document.getElementById('loading');
+            const image = document.getElementById('image');
+            
+            button.disabled = true;
+            loading.style.display = 'block';
+            image.style.display = 'none';
+
+            try {
+                const response = await fetch('/generate');
+                const data = await response.json();
+                image.src = `data:image/png;base64,${data.image}`;
+                image.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to generate image');
+            } finally {
+                button.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
