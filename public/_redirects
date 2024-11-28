@@ -1,5 +1,4 @@
 # Netlify redirects
 /about    /about.html    200
 /contact  /contact.html  200
-/blog/*    https://aiinteriordesigngenerator.com/blog/:splat    301
-/*        /index.html    200
+/        /index.html    200
