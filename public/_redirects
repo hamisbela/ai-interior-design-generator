@@ -1,5 +1,5 @@
 # Netlify redirects
 /about    /about.html    200
 /contact  /contact.html  200
-/blog/*    wordpress-883468-5070061.cloudwaysapps.com/:splat   200
+/blog/*    wordpress-883468-5070061.cloudwaysapps.com/:splat   301
 /        /index.html    200
