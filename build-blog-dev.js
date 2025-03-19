@@ -41,26 +41,49 @@ function processBlogPosts() {
   });
   
   // Check different locations for the CSV file
-  let csvFilePath = 'dev-blogposts.csv';
+  const possiblePaths = [
+    'dev-blogposts.csv',
+    'blogposts.csv',
+    'public/blogposts.csv'
+  ];
   
-  if (!fs.existsSync(csvFilePath)) {
-    csvFilePath = 'blogposts.csv';
-    if (!fs.existsSync(csvFilePath)) {
-      console.error('Error: Neither dev-blogposts.csv nor blogposts.csv found');
-      // Create a sample blog post so the site doesn't break
-      return createSampleBlogPost();
+  let csvFilePath = null;
+  let csvData = null;
+  
+  for (const filePath of possiblePaths) {
+    try {
+      if (fs.existsSync(filePath)) {
+        csvFilePath = filePath;
+        csvData = fs.readFileSync(filePath, 'utf8');
+        console.log(`Found CSV file at: ${filePath}`);
+        break;
+      }
+    } catch (error) {
+      console.log(`Error checking path ${filePath}: ${error.message}`);
     }
   }
   
-  // Read the CSV file
-  const csvData = fs.readFileSync(csvFilePath, 'utf8');
+  if (!csvData) {
+    console.error('Error: No CSV file found in any expected location');
+    // Create a sample blog post so the site doesn't break
+    return createSampleBlogPost();
+  }
   
-  // Parse the CSV
-  const records = parse(csvData, {
-    columns: true,
-    skip_empty_lines: true,
-    relax_column_count: true
-  });
+  let records = [];
+  
+  try {
+    // Parse the CSV
+    records = parse(csvData, {
+      columns: true,
+      skip_empty_lines: true,
+      relax_column_count: true,
+      relax: true
+    });
+    console.log(`Successfully parsed ${records.length} records from CSV`);
+  } catch (error) {
+    console.error(`Error parsing CSV: ${error.message}`);
+    return createSampleBlogPost();
+  }
   
   // Create blog listing page content
   let blogListingContent = `
@@ -117,37 +140,55 @@ function processBlogPosts() {
       let content = record.content || '';
       
       // Skip posts with empty content
-      if (!content.trim()) {
+      if (!content || !content.trim()) {
         console.log(`Skipping post "${title}" because content is empty`);
         continue;
       }
       
       // Extract the title from the first heading
-      const titleMatch = content.match(/^#\s+(.+?)(?=\s{2}|\n|$)/m);
       let blogTitle = title;
+      let processedContent = content;
       
-      if (titleMatch && titleMatch[1]) {
-        blogTitle = titleMatch[1].trim();
-        // Remove the title from the content to avoid duplication
-        content = content.replace(/^#\s+(.+?)(?=\s{2}|\n|$)/m, '');
+      try {
+        const titleMatch = content.match(/^#\s+(.+?)(?=\s{2}|\n|$)/m);
+        if (titleMatch && titleMatch[1]) {
+          blogTitle = titleMatch[1].trim();
+          // Remove the title from the content to avoid duplication
+          processedContent = content.replace(/^#\s+(.+?)(?=\s{2}|\n|$)/m, '');
+        }
+      } catch (error) {
+        console.log(`Error extracting title for post "${title}": ${error.message}`);
+        // Continue with the provided title
       }
       
       // Process content to properly format headings and images
+      try {
+        // Step 1: Process all inline markdown heading syntax (## Heading) to ensure they're on their own lines
+        processedContent = processedContent.replace(/(\s+)(#{2,4}\s+[\w\s\-:&',]+)(\s+)/g, "\n\n$2\n\n");
+        
+        // Step 2: Process image URLs
+        processedContent = processedContent.replace(/https:\/\/[^\s]+\.(jpg|jpeg|png|gif)/g, 
+          url => `\n\n![Interior design](${url})\n\n`);
+      } catch (error) {
+        console.log(`Error processing content for post "${title}": ${error.message}`);
+        // Continue with the original content
+        processedContent = content;
+      }
       
-      // Step 1: Process all inline markdown heading syntax (## Heading) to ensure they're on their own lines
-      content = content.replace(/(\s+)(#{2,4}\s+[\w\s\-:&',]+)(\s+)/g, "\n\n$2\n\n");
-      
-      // Step 2: Process image URLs
-      content = content.replace(/https:\/\/[^\s]+\.(jpg|jpeg|png|gif)/g, 
-        url => `\n\n![Interior design](${url})\n\n`);
-      
-      // Step 3: Convert markdown to HTML with proper heading support
-      marked.use({
-        mangle: false,
-        headerIds: false
-      });
-      
-      let htmlContent = marked.parse(content);
+      // Step 3: Convert markdown to HTML
+      let htmlContent = '';
+      try {
+        marked.use({
+          mangle: false,
+          headerIds: false
+        });
+        
+        htmlContent = marked.parse(processedContent);
+      } catch (error) {
+        console.error(`Error parsing markdown for post "${title}": ${error.message}`);
+        // Create a simple HTML paragraph from the content to prevent breaking
+        htmlContent = `<p>${processedContent}</p>`;
+      }
       
       // Create a slug from the title
       const slug = title
@@ -157,9 +198,13 @@ function processBlogPosts() {
       
       // Extract the first image URL for the featured image
       let featuredImageUrl = '';
-      const imageMatch = content.match(/!\[.*?\]\((https:\/\/[^\s)]+\.(jpg|jpeg|png|gif))\)/);
-      if (imageMatch && imageMatch[1]) {
-        featuredImageUrl = imageMatch[1];
+      try {
+        const imageMatch = processedContent.match(/!\[.*?\]\((https:\/\/[^\s)]+\.(jpg|jpeg|png|gif))\)/);
+        if (imageMatch && imageMatch[1]) {
+          featuredImageUrl = imageMatch[1];
+        }
+      } catch (error) {
+        console.log(`Error extracting featured image for post "${title}": ${error.message}`);
       }
       
       // Create the blog post HTML file

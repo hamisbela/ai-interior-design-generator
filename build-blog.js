@@ -17,27 +17,49 @@ function processBlogPosts() {
   console.log('Processing blog posts from CSV...');
   
   // Check different locations for the CSV file
-  let csvFilePath = 'blogposts.csv';
+  const possiblePaths = [
+    'blogposts.csv',
+    'public/blogposts.csv',
+    path.resolve('public/blogposts.csv')
+  ];
   
-  if (!fs.existsSync(csvFilePath)) {
-    csvFilePath = 'public/blogposts.csv';
-    if (!fs.existsSync(csvFilePath)) {
-      console.error('Error: blogposts.csv not found in root or public directory');
-      // Create a sample blog post so the site doesn't break
-      createSampleBlogPost();
-      return [];
+  let csvFilePath = null;
+  let csvData = null;
+  
+  for (const filePath of possiblePaths) {
+    try {
+      if (fs.existsSync(filePath)) {
+        csvFilePath = filePath;
+        csvData = fs.readFileSync(filePath, 'utf8');
+        console.log(`Found CSV file at: ${filePath}`);
+        break;
+      }
+    } catch (error) {
+      console.log(`Error checking path ${filePath}: ${error.message}`);
     }
   }
   
-  // Read the CSV file
-  const csvData = fs.readFileSync(csvFilePath, 'utf8');
+  if (!csvData) {
+    console.error('Error: blogposts.csv not found in any expected location');
+    // Create a sample blog post so the site doesn't break
+    return createSampleBlogPost();
+  }
   
-  // Parse the CSV
-  const records = parse(csvData, {
-    columns: true,
-    skip_empty_lines: true,
-    relax_column_count: true
-  });
+  let records = [];
+  
+  try {
+    // Parse the CSV
+    records = parse(csvData, {
+      columns: true,
+      skip_empty_lines: true,
+      relax_column_count: true,
+      relax: true
+    });
+    console.log(`Successfully parsed ${records.length} records from CSV`);
+  } catch (error) {
+    console.error(`Error parsing CSV: ${error.message}`);
+    return createSampleBlogPost();
+  }
   
   // Create blog listing page content
   let blogListingContent = `
@@ -91,7 +113,7 @@ function processBlogPosts() {
       const content = record.content || '';
       
       // Skip posts with empty content
-      if (!content.trim()) {
+      if (!content || !content.trim()) {
         console.log(`Skipping post "${title}" because content is empty`);
         continue;
       }
@@ -100,29 +122,47 @@ function processBlogPosts() {
       let blogTitle = title;
       let processedContent = content;
       
-      const titleMatch = content.match(/^#\s+(.+?)(?=\s{2}|\n|$)/m);
-      if (titleMatch && titleMatch[1]) {
-        blogTitle = titleMatch[1].trim();
-        // Remove the title from the content to avoid duplication
-        processedContent = content.replace(/^#\s+(.+?)(?=\s{2}|\n|$)/m, '');
+      // Try to extract the first heading - safely with error handling
+      try {
+        const titleMatch = content.match(/^#\s+(.+?)(?=\s{2}|\n|$)/m);
+        if (titleMatch && titleMatch[1]) {
+          blogTitle = titleMatch[1].trim();
+          // Remove the title from the content to avoid duplication
+          processedContent = content.replace(/^#\s+(.+?)(?=\s{2}|\n|$)/m, '');
+        }
+      } catch (error) {
+        console.log(`Error extracting title from post "${title}": ${error.message}`);
+        // Continue with the provided title
       }
       
-      // Process content to properly format headings and images
-      
-      // Step 1: Process all inline markdown heading syntax (## Heading) to ensure they're on their own lines
-      processedContent = processedContent.replace(/(\s+)(#{2,4}\s+[\w\s\-:&',]+)(\s+)/g, "\n\n$2\n\n");
-      
-      // Step 2: Process image URLs
-      processedContent = processedContent.replace(/https:\/\/[^\s]+\.(jpg|jpeg|png|gif)/g, 
-        url => `\n\n![Interior design](${url})\n\n`);
+      // Process content to properly format headings and images - with error handling
+      try {
+        // Step 1: Process all inline markdown heading syntax (## Heading) to ensure they're on their own lines
+        processedContent = processedContent.replace(/(\s+)(#{2,4}\s+[\w\s\-:&',]+)(\s+)/g, "\n\n$2\n\n");
+        
+        // Step 2: Process image URLs
+        processedContent = processedContent.replace(/https:\/\/[^\s]+\.(jpg|jpeg|png|gif)/g, 
+          url => `\n\n![Interior design](${url})\n\n`);
+      } catch (error) {
+        console.log(`Error processing content for post "${title}": ${error.message}`);
+        // Continue with the original content
+        processedContent = content;
+      }
       
       // Step 3: Convert markdown to HTML with proper heading support
-      marked.use({
-        mangle: false,
-        headerIds: false
-      });
-      
-      let htmlContent = marked.parse(processedContent);
+      let htmlContent = '';
+      try {
+        marked.use({
+          mangle: false,
+          headerIds: false
+        });
+        
+        htmlContent = marked.parse(processedContent);
+      } catch (error) {
+        console.error(`Error parsing markdown for post "${title}": ${error.message}`);
+        // Create a simple HTML paragraph from the content to prevent breaking
+        htmlContent = `<p>${processedContent}</p>`;
+      }
       
       // Create a slug from the title
       const slug = title
@@ -132,9 +172,13 @@ function processBlogPosts() {
       
       // Extract the first image URL for the featured image
       let featuredImageUrl = '';
-      const imageMatch = processedContent.match(/!\[.*?\]\((https:\/\/[^\s)]+\.(jpg|jpeg|png|gif))\)/);
-      if (imageMatch && imageMatch[1]) {
-        featuredImageUrl = imageMatch[1];
+      try {
+        const imageMatch = processedContent.match(/!\[.*?\]\((https:\/\/[^\s)]+\.(jpg|jpeg|png|gif))\)/);
+        if (imageMatch && imageMatch[1]) {
+          featuredImageUrl = imageMatch[1];
+        }
+      } catch (error) {
+        console.log(`Error extracting featured image for post "${title}": ${error.message}`);
       }
       
       // Create the blog post HTML file
@@ -275,7 +319,7 @@ function processBlogPosts() {
   // If no posts were created, add a placeholder
   if (postCount === 0) {
     console.warn('No blog posts were created from CSV. Creating a placeholder post.');
-    createSampleBlogPost();
+    return createSampleBlogPost();
   }
   
   // Complete the blog listing HTML
@@ -338,7 +382,7 @@ function processBlogPosts() {
     }
   }
   
-  // Also return featured posts for use in homepage
+  // Return featured posts for use in homepage
   return featuredPosts;
 }
 
@@ -571,69 +615,110 @@ As remote work continues to be a part of many people's lives, the need for flexi
 // Run the blog creation process and get featured posts
 const featuredPosts = processBlogPosts();
 
+// Copy files from /blog to /dist/blog if they exist (development mode)
+try {
+  const srcBlogDir = path.resolve('blog');
+  if (fs.existsSync(srcBlogDir)) {
+    const files = fs.readdirSync(srcBlogDir);
+    for (const file of files) {
+      const srcPath = path.join(srcBlogDir, file);
+      const destPath = path.join(blogDir, file);
+      
+      if (fs.statSync(srcPath).isFile()) {
+        console.log(`Copying ${file} from /blog to /dist/blog`);
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  }
+} catch (error) {
+  console.error('Error copying files from /blog to /dist/blog:', error);
+}
+
 // Update the homepage with featured posts if any are available
 if (featuredPosts.length > 0) {
   try {
-    const indexPath = path.resolve('index.html');
-    if (fs.existsSync(indexPath)) {
-      let homeContent = fs.readFileSync(indexPath, 'utf8');
-      
-      // Create the featured posts section
-      const featuredSection = `
-    <div class="featured-posts-section">
-        <h2>Latest Interior Design Inspirations</h2>
-        <p class="subtitle">Check out our latest interior design tips and ideas from our blog</p>
-        
-        <div class="featured-posts-grid">
-            ${featuredPosts.map(post => `
-            <div class="featured-post">
-                ${post.featuredImage ? `<div class="featured-post-image"><img src="${post.featuredImage}" alt="${post.title}" /></div>` : ''}
-                <div class="featured-post-content">
-                    <h3><a href="/blog/${post.slug}">${post.title}</a></h3>
-                    <div class="blog-meta">
-                        <span class="blog-author">By Jane Vance</span>
-                        <span class="blog-date">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                    </div>
-                    <p>${post.excerpt}</p>
-                    <a href="/blog/${post.slug}" class="read-more-link">Read More →</a>
+    const indexHtmlPath = path.resolve('index.html');
+    const distIndexHtmlPath = path.resolve('dist/index.html');
+    
+    let homeContent = '';
+    
+    // First check if dist/index.html exists
+    if (fs.existsSync(distIndexHtmlPath)) {
+      homeContent = fs.readFileSync(distIndexHtmlPath, 'utf8');
+    } 
+    // Otherwise use index.html from root
+    else if (fs.existsSync(indexHtmlPath)) {
+      homeContent = fs.readFileSync(indexHtmlPath, 'utf8');
+    } else {
+      console.log('No index.html found to update with featured posts');
+      process.exit(0);
+    }
+    
+    // Create the featured posts section
+    const featuredSection = `
+<div class="featured-posts-section">
+    <h2>Latest Interior Design Inspirations</h2>
+    <p class="subtitle">Check out our latest interior design tips and ideas from our blog</p>
+    
+    <div class="featured-posts-grid">
+        ${featuredPosts.map(post => `
+        <div class="featured-post">
+            ${post.featuredImage ? `<div class="featured-post-image"><img src="${post.featuredImage}" alt="${post.title}" /></div>` : ''}
+            <div class="featured-post-content">
+                <h3><a href="/blog/${post.slug}">${post.title}</a></h3>
+                <div class="blog-meta">
+                    <span class="blog-author">By Jane Vance</span>
+                    <span class="blog-date">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 </div>
+                <p>${post.excerpt}</p>
+                <a href="/blog/${post.slug}" class="read-more-link">Read More →</a>
             </div>
-            `).join('')}
         </div>
-        
-        <div class="view-all">
-            <a href="/blog" class="secondary-button">View All Blog Posts</a>
-        </div>
-    </div>`;
+        `).join('')}
+    </div>
+    
+    <div class="view-all">
+        <a href="/blog" class="secondary-button">View All Blog Posts</a>
+    </div>
+</div>`;
+    
+    // Check if featured section already exists
+    if (!homeContent.includes('<div class="featured-posts-section">')) {
+      // Insert the featured posts section after the generator card
+      homeContent = homeContent.replace(
+        /<div class="support-section">/,
+        `${featuredSection}\n\n<div class="support-section">`
+      );
       
-      // Check if featured section already exists
-      if (!homeContent.includes('<div class="featured-posts-section">')) {
-        // Insert the featured posts section after the generator card
-        homeContent = homeContent.replace(
-          /<div class="support-section">/,
-          `${featuredSection}\n\n<div class="support-section">`
-        );
-        
-        fs.writeFileSync(indexPath, homeContent);
-        console.log('Updated homepage with featured posts');
+      // Save the updated file
+      if (fs.existsSync(distIndexHtmlPath)) {
+        fs.writeFileSync(distIndexHtmlPath, homeContent);
+      } else {
+        // Ensure the dist directory exists
+        fsExtra.ensureDirSync(distDir);
+        fs.writeFileSync(path.join(distDir, 'index.html'), homeContent);
       }
+      console.log('Updated homepage with featured posts');
     }
   } catch (error) {
     console.error('Error updating homepage:', error);
   }
 }
 
-// Copy blogposts.csv to public folder if it doesn't exist there
+// Make sure all required files are in the dist folder
 try {
-  const publicDir = path.resolve('public');
-  const sourceFile = path.resolve('blogposts.csv');
-  const destFile = path.resolve('public/blogposts.csv');
+  // Copy static files from root to dist if they don't exist in dist
+  const staticFiles = ['about.html', 'contact.html', 'terms.html', 'privacy.html'];
   
-  if (fs.existsSync(sourceFile) && !fs.existsSync(destFile)) {
-    fsExtra.ensureDirSync(publicDir);
-    fs.copyFileSync(sourceFile, destFile);
-    console.log('Copied blogposts.csv to public folder');
+  for (const file of staticFiles) {
+    const srcPath = path.resolve(file);
+    const destPath = path.resolve(path.join(distDir, file));
+    
+    if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
+      console.log(`Copying ${file} to dist folder`);
+      fs.copyFileSync(srcPath, destPath);
+    }
   }
 } catch (error) {
-  console.error('Error copying blogposts.csv to public folder:', error);
+  console.error('Error copying static files to dist folder:', error);
 }

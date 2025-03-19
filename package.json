@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node build-blog-dev.js && vite",
-    "build": "node build-blog.js && vite build",
+    "build": "cp blogposts.csv public/ || true && node build-blog.js && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
