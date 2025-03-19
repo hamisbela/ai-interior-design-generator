@@ -55,9 +55,9 @@ function processBlogPosts() {
         </button>
         <div class="nav-links">
             <a href="/">Home</a>
-            <a href="/about.html">About Us</a>
-            <a href="/blog/index.html">Blog</a>
-            <a href="/contact.html">Contact</a>
+            <a href="/about">About Us</a>
+            <a href="/blog">Blog</a>
+            <a href="/contact">Contact</a>
             <a href="https://roihacks.gumroad.com/coffee" target="_blank" class="coffee-nav-button">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M4 11h12v3c0 1.657-1.343 3-3 3h-6c-1.657 0-3-1.343-3-3v-3zm14-2h-16v-1c0-1.105 0.895-2 2-2h12c1.105 0 2 0.895 2 2v1zm-3.333-3h-9.334c0-2.761 2.239-5 5-5s5 2.239 5 5z"/>
@@ -154,9 +154,9 @@ function processBlogPosts() {
         </button>
         <div class="nav-links">
             <a href="/">Home</a>
-            <a href="/about.html">About Us</a>
-            <a href="/blog/index.html">Blog</a>
-            <a href="/contact.html">Contact</a>
+            <a href="/about">About Us</a>
+            <a href="/blog">Blog</a>
+            <a href="/contact">Contact</a>
             <a href="https://roihacks.gumroad.com/coffee" target="_blank" class="coffee-nav-button">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M4 11h12v3c0 1.657-1.343 3-3 3h-6c-1.657 0-3-1.343-3-3v-3zm14-2h-16v-1c0-1.105 0.895-2 2-2h12c1.105 0 2 0.895 2 2v1zm-3.333-3h-9.334c0-2.761 2.239-5 5-5s5 2.239 5 5z"/>
@@ -168,7 +168,7 @@ function processBlogPosts() {
 
     <main class="container">
         <div class="content-section blog-post">
-            <a href="/blog/index.html" class="back-to-blog">← Back to Blog</a>
+            <a href="/blog" class="back-to-blog">← Back to Blog</a>
             <article>
                 <h1>${blogTitle}</h1>
                 <div class="blog-meta">
@@ -179,7 +179,7 @@ function processBlogPosts() {
             </article>
             
             <div class="post-navigation">
-                <a href="/blog/index.html" class="back-to-blog-bottom">Back to all posts</a>
+                <a href="/blog" class="back-to-blog-bottom">Back to all posts</a>
             </div>
         </div>
     </main>
@@ -190,9 +190,9 @@ function processBlogPosts() {
                 <h4>Quick Links</h4>
                 <ul class="footer-links">
                     <li><a href="/">Home</a></li>
-                    <li><a href="/about.html">About Us</a></li>
-                    <li><a href="/blog/index.html">Blog</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/contact">Contact</a></li>
                     <li><a href="https://roihacks.gumroad.com/coffee">Support Us</a></li>
                 </ul>
             </div>
@@ -207,8 +207,8 @@ function processBlogPosts() {
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul class="footer-links">
-                    <li><a href="/privacy.html">Privacy Policy</a></li>
-                    <li><a href="/terms.html">Terms of Service</a></li>
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms of Service</a></li>
                 </ul>
             </div>
         </div>
@@ -246,13 +246,13 @@ function processBlogPosts() {
     blogListingContent += `
       <div class="blog-card">
         ${featuredImageUrl ? `<div class="blog-card-image"><img src="${featuredImageUrl}" alt="${blogTitle}" /></div>` : ''}
-        <h2><a href="/blog/${slug}.html">${blogTitle}</a></h2>
+        <h2><a href="/blog/${slug}">${blogTitle}</a></h2>
         <div class="blog-meta">
           <span class="blog-author">By Jane Vance</span>
           <span class="blog-date">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
         </div>
         <div class="blog-excerpt">${excerpt}</div>
-        <a href="/blog/${slug}.html" class="read-more-link">Read More →</a>
+        <a href="/blog/${slug}" class="read-more-link">Read More →</a>
       </div>
     `;
     
@@ -273,9 +273,9 @@ function processBlogPosts() {
                 <h4>Quick Links</h4>
                 <ul class="footer-links">
                     <li><a href="/">Home</a></li>
-                    <li><a href="/about.html">About Us</a></li>
-                    <li><a href="/blog/index.html">Blog</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/contact">Contact</a></li>
                     <li><a href="https://roihacks.gumroad.com/coffee">Support Us</a></li>
                 </ul>
             </div>
@@ -290,8 +290,8 @@ function processBlogPosts() {
             <div class="footer-section">
                 <h4>Legal</h4>
                 <ul class="footer-links">
-                    <li><a href="/privacy.html">Privacy Policy</a></li>
-                    <li><a href="/terms.html">Terms of Service</a></li>
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms of Service</a></li>
                 </ul>
             </div>
         </div>
@@ -332,20 +332,20 @@ if (featuredPosts.length > 0) {
             <div class="featured-post">
                 ${post.featuredImage ? `<div class="featured-post-image"><img src="${post.featuredImage}" alt="${post.title}" /></div>` : ''}
                 <div class="featured-post-content">
-                    <h3><a href="/blog/${post.slug}.html">${post.title}</a></h3>
+                    <h3><a href="/blog/${post.slug}">${post.title}</a></h3>
                     <div class="blog-meta">
                         <span class="blog-author">By Jane Vance</span>
                         <span class="blog-date">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </div>
                     <p>${post.excerpt}</p>
-                    <a href="/blog/${post.slug}.html" class="read-more-link">Read More →</a>
+                    <a href="/blog/${post.slug}" class="read-more-link">Read More →</a>
                 </div>
             </div>
             `).join('')}
         </div>
         
         <div class="view-all">
-            <a href="/blog/index.html" class="secondary-button">View All Blog Posts</a>
+            <a href="/blog" class="secondary-button">View All Blog Posts</a>
         </div>
     </div>`;
     

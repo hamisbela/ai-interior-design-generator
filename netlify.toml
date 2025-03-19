@@ -4,3 +4,33 @@
 
 [build.environment]
   NODE_VERSION = "18"
+
+# Redirect rule to clean URLs (remove .html extension)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  conditions = {Language = ["en"]}
+  query = {path = ":path"}
+
+# Redirects for clean URLs (remove .html extension)
+[[redirects]]
+  from = "/about"
+  to = "/about.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog"
+  to = "/blog/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/blog/:splat.html"
+  status = 200
