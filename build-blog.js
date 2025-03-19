@@ -45,17 +45,34 @@ function processBlogPosts() {
     return createSampleBlogPost();
   }
   
+  // Debug: Print first 200 characters of CSV file
+  console.log(`CSV preview: ${csvData.substring(0, 200)}...`);
+  
   let records = [];
   
   try {
-    // Parse the CSV
+    // Parse the CSV with very relaxed options
     records = parse(csvData, {
       columns: true,
       skip_empty_lines: true,
       relax_column_count: true,
-      relax: true
+      relax: true,
+      delimiter: ',',
+      trim: true
     });
     console.log(`Successfully parsed ${records.length} records from CSV`);
+    
+    // Debug: Print structure of first record if exists
+    if (records.length > 0) {
+      console.log('First record structure:');
+      const keys = Object.keys(records[0]);
+      keys.forEach(key => {
+        const value = records[0][key];
+        const preview = typeof value === 'string' ? 
+          `"${value.substring(0, 50)}${value.length > 50 ? '...' : ''}"` : value;
+        console.log(`  ${key}: ${preview} (${typeof value})`);
+      });
+    }
   } catch (error) {
     console.error(`Error parsing CSV: ${error.message}`);
     return createSampleBlogPost();
@@ -107,10 +124,52 @@ function processBlogPosts() {
   let postCount = 0;
   
   // Process each blog post
-  for (const record of records) {
+  for (let i = 0; i < records.length; i++) {
     try {
-      const title = record.title || '';
-      const content = record.content || '';
+      const record = records[i];
+      
+      // Debug
+      console.log(`Processing record ${i+1}/${records.length}`);
+      
+      // Get title and content, handling potential different field names
+      let title = '';
+      let content = '';
+      
+      // Try different possible field names for title
+      if (record.title) title = record.title;
+      else if (record.Title) title = record.Title;
+      else if (record.name) title = record.name;
+      else if (record.Name) title = record.Name;
+      else {
+        // If no title field, use first key that's not content/Content
+        const keys = Object.keys(record);
+        for (const key of keys) {
+          if (key.toLowerCase() !== 'content') {
+            title = record[key];
+            break;
+          }
+        }
+      }
+      
+      // Try different possible field names for content
+      if (record.content) content = record.content;
+      else if (record.Content) content = record.Content;
+      else if (record.body) content = record.body;
+      else if (record.Body) content = record.Body;
+      else if (record.text) content = record.text;
+      else {
+        // If no content field, use any field that's not title/Title
+        const keys = Object.keys(record);
+        for (const key of keys) {
+          if (key.toLowerCase() !== 'title' && record[key]) {
+            content = record[key];
+            break;
+          }
+        }
+      }
+      
+      console.log(`Title: "${title}" (${typeof title})`);
+      console.log(`Content preview: "${content?.substring(0, 50)}..." (${typeof content})`);
       
       // Skip posts with empty content
       if (!content || !content.trim()) {
@@ -119,7 +178,7 @@ function processBlogPosts() {
       }
       
       // Extract the title from the first heading or use the provided title
-      let blogTitle = title;
+      let blogTitle = title || 'Interior Design Blog Post';
       let processedContent = content;
       
       // Try to extract the first heading - safely with error handling
@@ -134,6 +193,9 @@ function processBlogPosts() {
         console.log(`Error extracting title from post "${title}": ${error.message}`);
         // Continue with the provided title
       }
+      
+      // Debug
+      console.log(`Extracted blog title: "${blogTitle}"`);
       
       // Process content to properly format headings and images - with error handling
       try {
@@ -165,7 +227,7 @@ function processBlogPosts() {
       }
       
       // Create a slug from the title
-      const slug = title
+      const slug = (title || blogTitle)
         .toLowerCase()
         .replace(/[^\w\s]/g, '')
         .replace(/\s+/g, '-');
@@ -176,10 +238,18 @@ function processBlogPosts() {
         const imageMatch = processedContent.match(/!\[.*?\]\((https:\/\/[^\s)]+\.(jpg|jpeg|png|gif))\)/);
         if (imageMatch && imageMatch[1]) {
           featuredImageUrl = imageMatch[1];
+        } else {
+          // Try to find direct image URLs if markdown images not found
+          const directUrlMatch = processedContent.match(/(https:\/\/[^\s]+\.(jpg|jpeg|png|gif))/);
+          if (directUrlMatch && directUrlMatch[1]) {
+            featuredImageUrl = directUrlMatch[1];
+          }
         }
       } catch (error) {
         console.log(`Error extracting featured image for post "${title}": ${error.message}`);
       }
+      
+      console.log(`Featured image URL: ${featuredImageUrl || 'None found'}`);
       
       // Create the blog post HTML file
       const postContent = `
@@ -312,7 +382,7 @@ function processBlogPosts() {
       
       postCount++;
     } catch (error) {
-      console.error(`Error processing blog post: ${error.message}`);
+      console.error(`Error processing blog post at index ${i}: ${error.message}`);
     }
   }
   
