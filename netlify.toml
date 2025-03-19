@@ -5,6 +5,28 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Specific blog post redirects
+[[redirects]]
+  from = "/blog/12-inspiring-living-room-ideas-to-transform-your-space"
+  to = "/blog/12-inspiring-living-room-ideas-to-transform-your-space.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog/12-stunning-bathroom-ideas-to-transform-your-space"
+  to = "/blog/12-stunning-bathroom-ideas-to-transform-your-space.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog/12-inspiring-bedroom-ideas-stunning-design-photos-to-discover"
+  to = "/blog/12-inspiring-bedroom-ideas-stunning-design-photos-to-discover.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog/12-inspiring-small-bathroom-ideas-to-maximize-your-space"
+  to = "/blog/12-inspiring-small-bathroom-ideas-to-maximize-your-space.html"
+  status = 200
+
+# General redirects
 [[redirects]]
   from = "/blog/"
   to = "/blog/index.html"

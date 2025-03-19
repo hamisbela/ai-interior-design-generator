@@ -132,6 +132,7 @@ function processBlogPosts() {
   // Store featured posts for homepage
   let featuredPosts = [];
   let postCount = 0;
+  let allSlugs = []; // Store all slug names for debugging and creating specific redirects
   
   // Process each blog post
   for (let i = 0; i < records.length; i++) {
@@ -250,6 +251,9 @@ function processBlogPosts() {
         .replace(/-+/g, '-')
         .replace(/^-+|-+$/g, '');
       
+      // Add slug to our list for debugging
+      allSlugs.push(slug);
+      
       // Extract the first image URL for the featured image
       let featuredImageUrl = '';
       try {
@@ -279,6 +283,7 @@ function processBlogPosts() {
     <meta name="description" content="${blogTitle} - Interior design tips and trends from AI Interior Design Generator.">
     <title>${blogTitle} | Free AI Interior Design Generator</title>
     <link rel="stylesheet" href="/src/style.css">
+    <base href="/">
 </head>
 <body>
     <nav>
@@ -457,6 +462,18 @@ function processBlogPosts() {
   fs.writeFileSync(`${blogDir}/index.html`, blogListingContent);
   console.log('Created development blog index page');
   
+  // Create a custom redirects file for our blog posts
+  try {
+    let blogRedirects = "# Blog post specific redirects - development mode\n\n";
+    allSlugs.forEach(slug => {
+      blogRedirects += `/blog/${slug}    /blog/${slug}.html    200\n`;
+    });
+    fs.writeFileSync(path.resolve('blog/_redirects'), blogRedirects);
+    console.log('Created development blog-specific redirects file');
+  } catch (error) {
+    console.error('Error creating development blog redirects file:', error);
+  }
+  
   // Return featured posts for use in homepage
   return featuredPosts;
 }
@@ -502,6 +519,7 @@ As remote work continues to be a part of many people's lives, the need for flexi
     <meta name="description" content="${blogTitle} - Interior design tips and trends from AI Interior Design Generator.">
     <title>${blogTitle} | Free AI Interior Design Generator</title>
     <link rel="stylesheet" href="/src/style.css">
+    <base href="/">
 </head>
 <body>
     <nav>
@@ -590,6 +608,7 @@ As remote work continues to be a part of many people's lives, the need for flexi
     <meta name="description" content="Blog posts about interior design, home decor, and design trends from AI Interior Design Generator.">
     <title>Blog | Free AI Interior Design Generator</title>
     <link rel="stylesheet" href="/src/style.css">
+    <base href="/">
 </head>
 <body>
     <nav>
@@ -672,6 +691,13 @@ As remote work continues to be a part of many people's lives, the need for flexi
     // Save files
     fs.writeFileSync(`${blogDir}/${slug}.html`, postContent);
     fs.writeFileSync(`${blogDir}/index.html`, blogListingContent);
+    
+    // Create a specific redirect for this sample post
+    try {
+      fs.writeFileSync(path.resolve('blog/_redirects'), `/blog/${slug}    /blog/${slug}.html    200\n`);
+    } catch (error) {
+      console.error('Error creating sample blog redirect:', error);
+    }
     
     console.log('Created sample blog post');
     

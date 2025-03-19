@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node build-blog-dev.js && vite",
-    "build": "node build-blog.js && vite build"
+    "build": "node build-blog.js && cp public/_redirects dist/ && vite build"
   },
   "dependencies": {
     "together-ai": "*",
