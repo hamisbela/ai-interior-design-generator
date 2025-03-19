@@ -150,6 +150,7 @@ function processBlogPosts() {
       else if (record.Title) title = record.Title;
       else if (record.name) title = record.name;
       else if (record.Name) title = record.Name;
+      else if (record.Filename) title = record.Filename;
       else {
         // If no title field, use first key that's not content/Content
         const keys = Object.keys(record);
@@ -242,10 +243,12 @@ function processBlogPosts() {
       }
       
       // Create a slug from the title
-      const slug = (title || blogTitle)
+      const slug = blogTitle
         .toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, '-');
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
       
       // Extract the first image URL for the featured image
       let featuredImageUrl = '';

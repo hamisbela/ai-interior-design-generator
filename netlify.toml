@@ -5,7 +5,11 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Handle clean URLs (remove .html extension) - Order matters!
+[[redirects]]
+  from = "/blog/"
+  to = "/blog/index.html"
+  status = 200
+
 [[redirects]]
   from = "/blog"
   to = "/blog/index.html"
@@ -36,7 +40,6 @@
   to = "/terms.html"
   status = 200
 
-# For resources and static files
 [[redirects]]
   from = "/*"
   to = "/:splat"

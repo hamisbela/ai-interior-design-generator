@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node build-blog-dev.js && vite",
-    "build": "node build-blog.js && vite build",
-    "preview": "vite preview"
+    "build": "node build-blog.js && vite build"
   },
   "dependencies": {
     "together-ai": "*",
