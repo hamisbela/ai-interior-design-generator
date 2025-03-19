@@ -5,7 +5,17 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Handle clean URLs (remove .html extension)
+# Handle clean URLs (remove .html extension) - Order matters!
+[[redirects]]
+  from = "/blog"
+  to = "/blog/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/blog/:splat.html"
+  status = 200
+
 [[redirects]]
   from = "/about"
   to = "/about.html"
@@ -17,18 +27,17 @@
   status = 200
 
 [[redirects]]
-  from = "/blog"
-  to = "/blog/index.html"
+  from = "/privacy"
+  to = "/privacy.html"
   status = 200
 
 [[redirects]]
-  from = "/blog/*"
-  to = "/blog/:splat.html"
+  from = "/terms"
+  to = "/terms.html"
   status = 200
 
-# Single-page app fallback
+# For resources and static files
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/:splat"
   status = 200
-  force = false
