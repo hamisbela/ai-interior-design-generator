@@ -72,17 +72,23 @@ function processBlogPosts() {
   
   // Process each blog post
   records.forEach((record, index) => {
-    const title = record.title;
-    const content = record.content;
+    const title = record.title || '';
+    const content = record.content || '';
+    
+    // Skip posts with empty content
+    if (!content.trim()) {
+      console.log(`Skipping post "${title}" because content is empty`);
+      return;
+    }
     
     // Extract the title from the first heading
-    const titleMatch = content.match(/^#\s+(.+?)(?=\s{2}|\n)/);
+    const titleMatch = content.match(/^#\s+(.+?)(?=\s{2}|\n|$)/m);
     let blogTitle = title;
     
     if (titleMatch && titleMatch[1]) {
       blogTitle = titleMatch[1].trim();
       // Remove the title from the content to avoid duplication
-      content = content.replace(/^#\s+(.+?)(?=\s{2}|\n)/, '');
+      content = content.replace(/^#\s+(.+?)(?=\s{2}|\n|$)/m, '');
     }
     
     // Process content to properly format headings and images
